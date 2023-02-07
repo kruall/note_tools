@@ -6,6 +6,7 @@ class Link:
     LINK = 1
     HARDLINK = 2
     NETLINK = 3
+    PERSONA = 4
 
     def __init__(self, type, link):
         self.type = type
@@ -17,6 +18,8 @@ class Link:
             type = 'hardlink'
         if self.type == Link.NETLINK:
             type = 'netlink'
+        if self.type == Link.PERSONA:
+            type = 'persona'
         return f'{type}: "{self.link}"'
 
     @staticmethod
@@ -30,6 +33,10 @@ class Link:
     @staticmethod
     def make_netlink(link):
         return Link(Link.NETLINK, link)
+
+    @staticmethod
+    def make_persona(link):
+        return Link(Link.PERSONA, link)
 
 
 class Note:
@@ -88,15 +95,12 @@ class NoteThread:
                 if note is None:
                     continue
 
-                link = check_instruction('link', line)
-                if link:
-                    note.add_link(Link.make_link(link))
-                hardlink = check_instruction('hardlink', line)
-                if hardlink:
-                    note.add_link(Link.make_hardlink(hardlink))
-                netlink = check_instruction('netlink', line)
-                if netlink:
-                    note.add_link(Link.make_netlink(netlink))
+                for link_type in ('link', 'hardlink', 'netlink', 'persona'):
+                    link = check_instruction(link_type, line)
+                    if link:
+                        f = getattr(Link, f'make_{link_type}')
+                        note.add_link(f(link))
+                        break
                 write = check_instruction('write', line)
                 if write:
                     note.add_write_issue(write)
@@ -158,6 +162,7 @@ if __name__ == '__main__':
     missed_links = []
     write_issues = []
     note_manager = NoteManager()
+    personas = []
 
     note_threads = [NoteThread.get(file) for file in glob.glob('**/*.md', recursive=True)]
     for note_thread in note_threads:
@@ -171,6 +176,8 @@ if __name__ == '__main__':
                 if link.type == Link.HARDLINK:
                     if link.link not in note_manager.dictionary:
                         missed_links.append(link)
+                elif link.type == Link.PERSONA:
+                    personas.append(link)
                 elif link.link not in glossary.topics:
                     missed_links.append(link)
             for write_issue in note.write_issues:
@@ -187,8 +194,12 @@ if __name__ == '__main__':
         for topic in glossary.topics.keys():
             print(' *', topic)
     if write_issues:
-        print(f'Fount {len(write_issues)} write issues')
+        print(f'Found {len(write_issues)} write issues')
         for issue in write_issues:
             print(' *', issue)
+    if personas:
+        print(f'Found {len(personas)} personas')
+        for persona in personas:
+            print(' *', persona)
 
         
