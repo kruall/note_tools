@@ -3,7 +3,7 @@ import os.path
 
 
 class Link:
-    LINK = 1
+    GLOSSARY = 1
     HARDLINK = 2
     NETLINK = 3
     PERSONA = 4
@@ -13,7 +13,7 @@ class Link:
         self.link = link
 
     def __str__(self):
-        type = 'link'
+        type = 'glossary'
         if self.type == Link.HARDLINK:
             type = 'hardlink'
         if self.type == Link.NETLINK:
@@ -23,8 +23,8 @@ class Link:
         return f'{type}: "{self.link}"'
 
     @staticmethod
-    def make_link(link):
-        return Link(Link.LINK, link)
+    def make_glossary(link):
+        return Link(Link.GLOSSARY, link)
 
     @staticmethod
     def make_hardlink(link):
@@ -95,7 +95,7 @@ class NoteThread:
                 if note is None:
                     continue
 
-                for link_type in ('link', 'hardlink', 'netlink', 'persona'):
+                for link_type in ('glossary', 'hardlink', 'netlink', 'persona'):
                     link = check_instruction(link_type, line)
                     if link:
                         f = getattr(Link, f'make_{link_type}')
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                         missed_links.append(link)
                 elif link.type == Link.PERSONA:
                     personas.append(link)
-                elif link.link not in glossary.topics:
+                elif link.type != Link.GLOSSARY or link.link not in glossary.topics:
                     missed_links.append(link)
             for write_issue in note.write_issues:
                 if ' ' in write_issue:
